@@ -11,9 +11,16 @@ BINANCE = BinanceWrapper()
 
 BASE_PATH = "./dashboard/data"
 
-def get_spy_prices(from_datetime, to_datetime):
-    if not os.path.isdir(f"{BASE_PATH}/spy"):
+if not os.path.isdir(BASE_PATH):
+    os.mkdir(BASE_PATH)
+
+if not os.path.isdir(f"{BASE_PATH}/coins"):
+        os.mkdir(f"{BASE_PATH}/coins")
+
+if not os.path.isdir(f"{BASE_PATH}/spy"):
         os.mkdir(f"{BASE_PATH}/spy")
+
+def get_spy_prices(from_datetime, to_datetime):
 
     file_path = f"{BASE_PATH}/spy/spy_{from_datetime.strftime('%Y_%m_%d')}_{to_datetime.strftime('%Y_%m_%d')}"
     if os.path.exists(file_path):
@@ -35,8 +42,7 @@ def get_spy_prices(from_datetime, to_datetime):
     return df
 
 def get_coin_prices(coin:list, from_datetime:datetime, to_datetime:datetime)->pd.DataFrame:
-    if not os.path.isdir(f"{BASE_PATH}/coins"):
-        os.mkdir(f"{BASE_PATH}/coins")
+
     file_path = f"{BASE_PATH}/coins/{coin[0]}_{from_datetime.strftime('%Y_%m_%d')}_{to_datetime.strftime('%Y_%m_%d')}"
     if os.path.exists(file_path):
         df, source = pickle.load(open(file_path, "rb"))
@@ -94,7 +100,6 @@ def get_coin_prices(coin:list, from_datetime:datetime, to_datetime:datetime)->pd
     pickle.dump((df, source), open(file_path, "wb"))
 
     return df, source
-
 
 def get_coins_markets_cg()->list:
     return COINGECKO.get_coins_markets(
