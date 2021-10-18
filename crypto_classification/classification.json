@@ -1,0 +1,82 @@
+{
+    "btc": {
+        "blockchain": ["bitcoin"],
+        "sector": "currency",
+        "usage": ["payments"],
+        "type": "native",
+        "consensus": ["proof of work"],
+        "tps": 7
+    },
+    "bnb": {
+        "blockchain": ["binance chain"],
+        "sector": "centrilized exchanges",
+        "usage": ["fees payment", "access", "discount", "vote"],
+        "type": "native",
+        "consensus": "proof of stake",
+        "tps": 94
+    },
+    "ada": {
+        "blockchain": ["cardano"],
+        "sector": "smart contract platforms",
+        "usage": ["sustainability", "scalability", "dapps", "smart contracts", "payments", "vote", "regulatory control"],
+        "type": "native",
+        "consensus": ["proof of stake"],
+        "tps": 257
+    },
+    "sol": {
+        "blockchain": ["solana"],
+        "sector": "smart contract platforms",
+        "usage": ["dapps", "smart contracts", "defi", "speed", "scalability", "nft", "fees payment", "payments", "games"],
+        "type": "native",
+        "consensus": ["proof of history", "proof of stake"],
+        "tps": 65000
+    },
+    "usdc": {
+        "blockchain": ["ethereum", "solana", "algorand", "stellar", "tron"],
+        "sector": "stablecoin",
+        "usage": ["payment"],
+        "type": "fully collateralized",
+        "consensus": [],
+        "tps": 1000
+    },
+    "luna": {
+        "blockchain": ["terra"],
+        "sector": "smart contract platforms",
+        "usage": ["payments", "vote", "smart contracts"],
+        "type": "native",
+        "consensus": ["proof of stake"],
+        "tps": 10000
+    },
+    "wbtc": {
+        "blockchain": ["ethereum"],
+        "sector": "smart contract platforms",
+        "usage": ["smart contracts", "defi", "dapps"],
+        "type": "erc20 token",
+        "consensus": ["proof of work"],
+        "tps": 20
+    },
+    "ltc": {
+        "blockchain": "litecoin",
+        "sector": "currency",
+        "usage": ["payments"],
+        "type": "native",
+        "consensus": ["proof of work"],
+        "tps": 28
+    },
+    "avax": {
+        "blockchain": ["x-chain", "p-chain", "c-chain"],
+        "sector": "smart contract platforms",
+        "usage": ["vote", "dapps", "smart contracts", "speed", "sustainability", "fees payment", "defi", "nft", "games"],
+        "type": "native",
+        "consensus": ["proof of stake"],
+        "tps": 4500
+    },
+    "bch": {
+        "blockchain": ["bitcoin cash"],
+        "sector": "currency",
+        "usage": ["payments"],
+        "type": "native",
+        "consensus": ["proof of work"],
+        "tps": 116
+    }
+}
