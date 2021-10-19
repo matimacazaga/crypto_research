@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 import altair as alt
 from joblib import Parallel, delayed
-from .data_management import get_coin_prices
+from .data_management import get_coin_price
 import pickle
 import os
 import yfinance as yf
@@ -20,7 +20,7 @@ def top_100_by_mkt_cap(coins_markets:dict, columns:list)->pd.DataFrame:
 
 def compute_stats(coin, from_datetime, to_datetime, spy:pd.DataFrame, btc:pd.DataFrame):
 
-    coin_data, _ = get_coin_prices(coin, from_datetime, to_datetime)
+    coin_data, _ = get_coin_price(coin, from_datetime, to_datetime)
 
     df = coin_data.set_index("date")
 
@@ -42,13 +42,43 @@ def compute_stats(coin, from_datetime, to_datetime, spy:pd.DataFrame, btc:pd.Dat
 
     sharpe_ratio = (mean_return / volatility)
 
-    return {"name": coin[1], "spy_corr": spy_corr, "btc_corr": btc_corr, "beta_capm": slope, "mean_return": mean_return, "volatility": volatility, "sharpe_ratio": sharpe_ratio}
+    return {"name": coin[1], "spy_corr": spy_corr, "btc_corr": btc_corr, "beta_capm_crypto": slope, "mean_return": mean_return, "volatility": volatility, "sharpe_ratio": sharpe_ratio}
 
 def get_stats(coins:list, from_datetime:str, to_datetime:str, spy:pd.DataFrame, btc:pd.DataFrame):
 
-    corrs = Parallel(n_jobs=20, backend="threading")(delayed(compute_stats)(coin, from_datetime, to_datetime, spy, btc) for coin in coins)
+    stats = Parallel(n_jobs=20, backend="threading")(delayed(compute_stats)(coin, from_datetime, to_datetime, spy, btc) for coin in coins)
 
-    return pd.DataFrame(corrs)
+    return pd.DataFrame(stats)
+
+def get_coin_stats(df:pd.DataFrame)->pd.DataFrame:
+
+    coin_stats = {}
+
+    for i in [7, 30, 90]:
+
+        df_ = df.iloc[-i:]["return"]
+
+        coin_stats[f"Last {i} days"] = {
+            "Mean": df_.mean(),
+            "Volatility": df_.std(ddof=1),
+            "Min": df_.min(),
+            "Max": df_.max(),
+            "1Q": df_.quantile(0.25),
+            "3Q": df_.quantile(0.75),
+        }
+
+    coin_stats["Historical"] = {
+        "Mean": df.loc[:, "return"].mean(),
+        "Volatility": df.loc[:, "return"].std(ddof=1),
+        "Min": df.loc[:, "return"].min(),
+        "Max": df.loc[:, "return"].max(),
+        "1Q": df.loc[:, "return"].quantile(0.25),
+        "3Q": df.loc[:, "return"].quantile(0.75),
+    }
+
+    coin_stats = pd.DataFrame(coin_stats)
+
+    return coin_stats
 
 def make_coin_plots(df):
 
@@ -106,29 +136,23 @@ def make_coin_plots(df):
         y=alt.Y('density:Q', title="PDF"),
     )
 
+    ret_range = np.linspace(
+        df.loc[:, "return"].min(),
+        df.loc[:, "return"].max(),
+        1000,
+    )
     norm_ret = pd.DataFrame({
-        "return": np.linspace(
-        df.loc[:, "return"].min(),
-        df.loc[:, "return"].max(),
-        1000,
-    ),
-        "density": norm.pdf(np.linspace(
-        df.loc[:, "return"].min(),
-        df.loc[:, "return"].max(),
-        1000,
-    ), loc=df.loc[:, "return"].mean(), scale=df.loc[:, "return"].std(ddof=1))})
+        "return": ret_range,
+        "density": norm.pdf(
+            ret_range,
+            loc=df.loc[:, "return"].mean(),
+            scale=df.loc[:, "return"].std(ddof=1)
+        )
+    })
 
     return_dist_norm = alt.Chart(norm_ret).mark_line(color="red").encode(
         x=alt.X("return:Q", title="Retorno"),
         y=alt.Y('density:Q', title="PDF"),
     )
-
-
-    # return_dist = alt.Chart(df).mark_bar().encode(
-    #     alt.X("return:Q", bin=alt.BinParams(maxbins = 30), title="Retorno"),
-    #     alt.Y("count()", title=""),
-    # ).properties(
-    #     title="Distribución de los retornos diarios"
-    # )
 
     return price_chart & price_view, return_chart & return_view, return_dist + return_dist_norm
