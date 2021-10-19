@@ -1,82 +1,402 @@
 {
     "btc": {
-        "blockchain": ["bitcoin"],
-        "sector": "currency",
-        "usage": ["payments"],
+        "blockchain": "bitcoin",
+        "sector": "currencies",
+        "usage": "payments",
         "type": "native",
-        "consensus": ["proof of work"],
+        "consensus": "proof of work",
         "tps": 7
     },
     "bnb": {
-        "blockchain": ["binance chain"],
+        "blockchain": "binance chain",
         "sector": "centrilized exchanges",
-        "usage": ["fees payment", "access", "discount", "vote"],
+        "usage": ["fees payment", "access", "discount", "vote", "exchange token"],
         "type": "native",
         "consensus": "proof of stake",
         "tps": 94
     },
     "ada": {
-        "blockchain": ["cardano"],
+        "blockchain": "cardano",
         "sector": "smart contract platforms",
         "usage": ["sustainability", "scalability", "dapps", "smart contracts", "payments", "vote", "regulatory control"],
         "type": "native",
-        "consensus": ["proof of stake"],
+        "consensus": "proof of stake",
         "tps": 257
     },
     "sol": {
-        "blockchain": ["solana"],
+        "blockchain": "solana",
         "sector": "smart contract platforms",
-        "usage": ["dapps", "smart contracts", "defi", "speed", "scalability", "nft", "fees payment", "payments", "games"],
+        "usage": ["dapps", "smart contracts", "defi", "speed", "scalability", "nft", "fees payment", "payments", "gaming"],
         "type": "native",
         "consensus": ["proof of history", "proof of stake"],
         "tps": 65000
     },
     "usdc": {
         "blockchain": ["ethereum", "solana", "algorand", "stellar", "tron"],
-        "sector": "stablecoin",
-        "usage": ["payment"],
+        "sector": "stablecoins",
+        "usage": "payments",
         "type": "fully collateralized",
-        "consensus": [],
+        "consensus": "n/a",
         "tps": 1000
     },
     "luna": {
-        "blockchain": ["terra"],
+        "blockchain": "terra",
         "sector": "smart contract platforms",
         "usage": ["payments", "vote", "smart contracts"],
         "type": "native",
-        "consensus": ["proof of stake"],
+        "consensus": "proof of stake",
         "tps": 10000
     },
     "wbtc": {
-        "blockchain": ["ethereum"],
+        "blockchain": "ethereum",
         "sector": "smart contract platforms",
         "usage": ["smart contracts", "defi", "dapps"],
-        "type": "erc20 token",
-        "consensus": ["proof of work"],
+        "type": "erc-20",
+        "consensus": "proof of work",
         "tps": 20
     },
     "ltc": {
         "blockchain": "litecoin",
-        "sector": "currency",
+        "sector": "currencies",
         "usage": ["payments"],
         "type": "native",
-        "consensus": ["proof of work"],
+        "consensus": "proof of work",
         "tps": 28
     },
     "avax": {
-        "blockchain": ["x-chain", "p-chain", "c-chain"],
+        "blockchain": ["avalanche", "x-chain", "p-chain", "c-chain"],
         "sector": "smart contract platforms",
-        "usage": ["vote", "dapps", "smart contracts", "speed", "sustainability", "fees payment", "defi", "nft", "games"],
+        "usage": ["vote", "dapps", "smart contracts", "speed", "sustainability", "fees payment", "defi", "nft", "gaming"],
         "type": "native",
-        "consensus": ["proof of stake"],
+        "consensus": "proof of stake",
         "tps": 4500
     },
     "bch": {
-        "blockchain": ["bitcoin cash"],
-        "sector": "currency",
+        "blockchain": "bitcoin cash",
+        "sector": "currencies",
         "usage": ["payments"],
         "type": "native",
-        "consensus": ["proof of work"],
+        "consensus": "proof of work",
         "tps": 116
+    },
+    "matic": {
+        "blockchain": ["polygon network", "ethereum", "side-chains"],
+        "sector": "scaling",
+        "usage": ["payments", "vote", "dapps", "scalability", "multi-chain support", "defi", "smart contracts", "fees payment", "nft", "gaming", "speed"],
+        "type": "native",
+        "consensus": "proof of stake",
+        "tps": 7200
+    },
+    "atom": {
+        "blockchain": ["cosmos network", "gaia"],
+        "sector": "smart contract platforms",
+        "usage": ["payments", "vote", "multi-chain support", "defi", "smart contracts", "dapps", "fees payment", "scalability", "speed", "gaming"],
+        "type": "native",
+        "consensus": "proof of stake",
+        "tps": 7000
+    },
+    "icp": {
+        "blockchain": "internet computer",
+        "sector": "smart contract platforms",
+        "usage": ["payments", "work", "scalability", "speed"],
+        "type": "native",
+        "consensus": "threshold relay",
+        "tps": 9000
+    },
+    "fil": {
+        "blockchain": "filecoin",
+        "sector": "file storage",
+        "usage": ["payments"],
+        "type": "native",
+        "consensus": ["proof of spacetime", "proof of replication"],
+        "tps": 15
+    },
+    "dai": {
+        "blockchain": "ethereum",
+        "sector": "stablecoins",
+        "usage": ["payments"],
+        "type": "erc-20",
+        "consensus": "n/a",
+        "tps": 20
+    },
+    "ftt": {
+        "blockchain": "ethereum",
+        "sector": "centrilized exchanges",
+        "usage": ["discount", "exchange token"],
+        "type": "erc-20",
+        "consensus": "n/a",
+        "tps": 20
+    },
+    "theta": {
+        "blockchain": "theta network",
+        "sector": "content creation and distribution",
+        "usage": ["payments", "vote", "nft", "smart contracts", "dapps"],
+        "type": "native",
+        "consensus": "proof of stake",
+        "tps": 1000
+    },
+    "ftm": {
+        "blockchain": "fantom",
+        "sector": "smart contract platforms",
+        "usage": ["payments", "vote", "dapps", "scalability", "speed"],
+        "type": ["bep2", "erc-20", "native"],
+        "consensus": "proof of stake",
+        "tps": 7500
+    },
+    "steth": {
+        "blockchain": "ethereum",
+        "sector": "smart contract platforms",
+        "usage": ["stacking", "defi"],
+        "type": "erc-20",
+        "consensus": "proof of stake",
+        "tps": 20
+    },
+    "cro": {
+        "blockchain": "crypto.org chain",
+        "sector": ["payment platforms", "centrilized exchanges"],
+        "usage": ["payments", "defi"],
+        "type": "erc-20",
+        "consensus": "n/a",
+        "tps": 300
+    },
+    "xmr": {
+        "blockchain": "monero",
+        "sector": "currencies",
+        "usage": ["payments", "privacy"],
+        "type": "native",
+        "consensus": "proof of work",
+        "tps": 1700
+    },
+    "eos": {
+        "blockchain": "eosio",
+        "sector": "smart contract platforms",
+        "usage": ["payments", "vote", "dapps", "smart contracts"],
+        "type": "native",
+        "consensus": "proof of stake",
+        "tps": 9600
+    },
+    "cdai": {
+        "blockchain": "ethereum",
+        "sector": "ctokens",
+        "usage": ["payments", "money market"],
+        "type": "erc-20",
+        "consensus": "n/a",
+        "tps": 20
+    },
+    "klay": {
+        "blockchain": "klaytn",
+        "sector": "smart contract platforms",
+        "usage": ["payments", "smart contracts", "dapps"],
+        "type": "native",
+        "consensus": "ibft",
+        "tps": 4000
+    },
+    "aave": {
+        "blockchain": "ethereum",
+        "sector": "lending",
+        "usage": ["payments", "discount", "vote"],
+        "type": "erc-20",
+        "consensus": "n/a",
+        "tps": 20
+    },
+    "cusdc": {
+        "blockchain": "ethereum",
+        "sector": "ctokens",
+        "usage": ["payments", "money market"],
+        "type": "erc-20",
+        "consensus": "n/a",
+        "tps": 20
+    },
+    "iota": {
+        "blockchain": "tangle",
+        "sector": "iot",
+        "usage": ["payments", "security", "sustainability", "regulatory control", "scalability"],
+        "type": "native",
+        "consensus": "dag",
+        "tps": 1500
+    },
+    "bsv": {
+        "blockchain": "bitcoin sv",
+        "sector": "currencies",
+        "usage": ["payments"],
+        "type": "native",
+        "consensus": "proof of work",
+        "tps": 9000
+    },
+    "neo": {
+        "blockchain": "neo",
+        "sector": "smart contract platforms",
+        "usage": ["payments", "vote", "smart contracts", "digital assets", "digital identity"],
+        "type": "native",
+        "consensus": "dbft",
+        "tps": 5000
+    },
+    "leo": {
+        "blockchain": ["ethereum", "eos"],
+        "sector": "centrilized exchanges",
+        "usage": "discount",
+        "type": ["erc-20", "eosio"],
+        "consensus": "n/a",
+        "tps": 20
+    },
+    "one": {
+        "blockchain": "harmony",
+        "sector": "smart contract platforms",
+        "usage": ["payments", "dapps", "nft"],
+        "type": "native",
+        "consensus": "proof of stake",
+        "tps": 2000
+    },
+    "ohm": {
+        "blockchain": "ethereum",
+        "sector": "currencies",
+        "usage": ["payments", "vote"],
+        "type": "erc-20",
+        "consensus": "n/a",
+        "tps": 20
+    },
+    "stx": {
+        "blockchain": "stacks",
+        "sector": "smart contract platforms",
+        "usage": ["payments", "smart contracts", "dapps", "digital assets"],
+        "type": "native",
+        "consensus": "proof of transfer",
+        "tps": "n/a"
+    },
+    "amp": {
+        "blockchain": "ethereum",
+        "sector": "payment platforms",
+        "usage": ["payments", "collateralization"],
+        "type": "erc-20",
+        "consensus": "proof of work",
+        "tps": 20
+    },
+    "mkr": {
+        "blockchain": "ethereum",
+        "sector": "lending",
+        "usage": "vote",
+        "type": "erc-20",
+        "consensus": "proof of work",
+        "tps": 20
+    },
+    "sushi": {
+        "blockchain": "ethereum",
+        "sector": "decentralized exchanges",
+        "usage": ["vote", "dividends", "defi"],
+        "type": "erc-20",
+        "consensus": "n/a",
+        "tps": 20
+    },
+    "rune": {
+        "blockchain": "thorchain",
+        "sector": "decentralized exchanges",
+        "usage": ["payments", "work", "defi"],
+        "type": "bep2",
+        "consensus": "proof of stake",
+        "tps": 800
+    },
+    "omg": {
+        "blockchain": "ethereum",
+        "sector": "scaling",
+        "usage": "payments",
+        "type": "erc-20",
+        "consensus": "proof of authority",
+        "tps": 800
+    },
+    "chz": {
+        "blockchain": "chiliz",
+        "sector": "sports",
+        "usage": "payments",
+        "type": ["bep2", "erc-20"],
+        "consensus": "n/a",
+        "tps": "n/a"
+    },
+    "mim": {
+        "blockchain": "ethereum",
+        "sector": "lending",
+        "usage": "defi",
+        "type": "erc-20",
+        "consensus": "proof of stake",
+        "tps": "n/a"
+    },
+    "hot": {
+        "blockchain": "holochain",
+        "sector": "application development",
+        "usage": "access",
+        "type": "erc-20",
+        "consensus": "distributed hash table",
+        "tps": "n/a"
+    },
+    "tfuel": {
+        "blockchain": "theta network",
+        "sector": "content creation and distribution",
+        "usage": ["payments", "nft", "smart contracts", "dapps"],
+        "type": "native",
+        "consensus": "proof of stake",
+        "tps": 1000
+    },
+    "xem": {
+        "blockchain": "nem",
+        "sector": "smart contract platforms",
+        "usage": ["payments", "smart contracts", "regulatory control"],
+        "type": "native",
+        "consensus": "proof of importance",
+        "tps": 4000
+    },
+    "icn": {
+        "blockchain": "icon",
+        "sector": "enterprise and baas",
+        "usage": ["payments", "vote", "dapps"],
+        "type": "native",
+        "consensus": "loop fault tolerance",
+        "tps": 9000
+    },
+    "qtum": {
+        "blockchain": "qtum",
+        "sector": "smart contract platforms",
+        "usage": ["payments", "smart contracts", "vote", "dapps", "fees payment"],
+        "type": "native",
+        "consensus": "proof of stake",
+        "tps": 70
+    },
+    "ht": {
+        "blockchain": "ethereum",
+        "sector": "centrilized exchanges",
+        "usage": "discount",
+        "type": "erc-20",
+        "consensus": "n/a",
+        "tps": 20
+    },
+    "spell": {
+        "blockchain": "ethereum",
+        "sector": "lending",
+        "usage": "defi",
+        "type": "erc-20",
+        "consensus": "proof of stake",
+        "tps": "n/a"
+    },
+    "zil": {
+        "blockchain": "zilliqa",
+        "sector": "smart contract platforms",
+        "usage": ["scalability", "smart contracts", "payments", "nft"],
+        "type": "erc-20",
+        "consensus": ["proof of work", "pbft"],
+        "tps": 2500
+    },
+    "dydx": {
+        "blockchain": "ethereum",
+        "sector": "decentralized exchanges",
+        "usage": ["defi", "vote", "discount"],
+        "type": "erc-20",
+        "consensus": "proof of stake",
+        "tps": "n/a"
+    },
+    "curve": {
+        "blockchain": "ethereum",
+        "sector": "decentralized exchanges",
+        "usage": ["vote", "defi"],
+        "type": "erc-20",
+        "consensus": "proof of stake",
+        "tps": "n/a"
     }
 }
