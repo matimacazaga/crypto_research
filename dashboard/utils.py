@@ -26,6 +26,21 @@ def compute_stats(coin, from_datetime, to_datetime, spy:pd.DataFrame, btc:pd.Dat
 
     df.index = pd.to_datetime(df.index)
 
+    # junto los dataframes en un nuevo dataframe
+    result = pd.concat([df, spy], axis=1)
+
+    # creo la nueva columna de aggregate returns y la igualo al retorno del dia
+    result['agg_ret'] = result.iloc[:,2]
+
+    # si los datos para el spy de los dos dias anteriores son NaN, el agg_ret pasa a ser la suma de las ultimas 3 observaciones
+    result.loc[pd.isna(result.shift(1).iloc[:,3]) & pd.isna(result.shift(2).iloc[:,3]),
+     'agg_ret'] = result.iloc[:,2] + result.shift(1).iloc[:,2] + result.shift(2).iloc[:,2]
+
+    result = result.dropna()
+    
+    # encuentro las correlaciones
+    spy2_corr = result.iloc[:,4].astype(float).corr(result.iloc[:,5].astype(float))
+
     dates_spy = spy.dropna().index.intersection(df.dropna().index)
 
     dates_btc = btc.dropna().index.intersection(df.dropna().index)
@@ -42,7 +57,7 @@ def compute_stats(coin, from_datetime, to_datetime, spy:pd.DataFrame, btc:pd.Dat
 
     sharpe_ratio = (mean_return / volatility)
 
-    return {"name": coin[1], "spy_corr": spy_corr, "btc_corr": btc_corr, "beta_capm_crypto": slope, "mean_return": mean_return, "volatility": volatility, "sharpe_ratio": sharpe_ratio}
+    return {"name": coin[1], "spy_corr": spy_corr, "spy2_corr": spy2_corr,"btc_corr": btc_corr, "beta_capm_crypto": slope, "mean_return": mean_return, "volatility": volatility, "sharpe_ratio": sharpe_ratio}
 
 def get_stats(coins:list, from_datetime:str, to_datetime:str, spy:pd.DataFrame, btc:pd.DataFrame):
 
