@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 import pickle
 import pandas as pd
+import numpy as np
 
 COINGECKO = CoinGeckoAPI()
 BINANCE = BinanceWrapper()
@@ -33,7 +34,7 @@ def get_spy_price(from_datetime, to_datetime):
         "SPY", start=from_datetime, end=to_datetime
     )
 
-    df.loc[:, "return"] = df.loc[:, "Adj Close"].pct_change()
+    df.loc[:, "return"] = np.log1p(df.loc[:, "Adj Close"].pct_change())
 
     df.rename({"Adj Close": "price"}, axis=1, inplace=True)
 
@@ -111,7 +112,7 @@ def get_coin_price(coin:list,
 
         df, source = get_coin_price_binance(coin[1].upper() + "USDT", from_datetime, to_datetime)
 
-        df.loc[:, "return"] = df.loc[:, "price"].pct_change()
+        df.loc[:, "return"] = np.log1p(df.loc[:, "price"].pct_change())
 
         return df, source
 
@@ -119,7 +120,7 @@ def get_coin_price(coin:list,
 
         df, source = get_coin_price_binance(coin[1].upper() + "BTC", from_datetime, to_datetime)
 
-        df.loc[:, "return"] = df.loc[:, "price"].pct_change()
+        df.loc[:, "return"] = np.log1p(df.loc[:, "price"].pct_change())
 
         return df, source
 
@@ -129,7 +130,7 @@ def get_coin_price(coin:list,
 
         try:
             df, source = get_coin_price_coingecko(coin, from_datetime, to_datetime)
-            df.loc[:, "return"] = df.loc[:, "price"].pct_change()
+            df.loc[:, "return"] = np.log1p(df.loc[:, "price"].pct_change())
             pickle.dump((df, source), open(file_path, "wb"))
         except:
             if os.path.exists(file_path):
