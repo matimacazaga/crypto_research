@@ -209,12 +209,4 @@ def get_coins_market_caps_cg()->list:
 
 #TODO: arreglar pedido de datos a binance cuando el rango excede los 1000 dias.
 
-    return COINGECKO.get_coins_markets(
-        vs_currency='usd',
-        include_market_cap="true"
-    )
-
-
-
-#TODO: arreglar pedido de datos a binance cuando el rango excede los 100 dias.
 
