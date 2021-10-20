@@ -142,3 +142,5 @@ def get_coins_market_caps_cg()->list:
         vs_currency='usd',
         include_market_cap="true"
     )
+
+#TODO: arreglar pedido de datos a binance cuando el rango excede los 100 dias.
