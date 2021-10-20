@@ -37,7 +37,7 @@ def compute_stats(coin, from_datetime, to_datetime, spy:pd.DataFrame, btc:pd.Dat
      'agg_ret'] = result.iloc[:,2] + result.shift(1).iloc[:,2] + result.shift(2).iloc[:,2]
 
     result = result.dropna()
-    
+
     # encuentro las correlaciones
     spy2_corr = result.iloc[:,4].astype(float).corr(result.iloc[:,5].astype(float))
 
@@ -170,4 +170,19 @@ def make_coin_plots(df):
         y=alt.Y('density:Q', title="PDF"),
     )
 
-    return price_chart & price_view, return_chart & return_view, return_dist + return_dist_norm
+    df_ = df.copy()
+
+    df_.loc[:, "month"] = df.loc[:, "date"].dt.strftime("%B")
+
+    boxplot = alt.Chart(df_).mark_boxplot().encode(
+        x = alt.X(
+            "month:N",
+            sort=[
+                "January", "February", "March", "April", "May", "June", "July",
+                "August", "September", "October", "November", "December"
+            ]
+        ),
+        y = "return:Q",
+    )
+
+    return price_chart & price_view, return_chart & return_view, return_dist + return_dist_norm, boxplot

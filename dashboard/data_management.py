@@ -7,6 +7,7 @@ from datetime import datetime
 import pickle
 import pandas as pd
 import numpy as np
+import time
 
 COINGECKO = CoinGeckoAPI()
 BINANCE = BinanceWrapper()
@@ -25,10 +26,10 @@ if not os.path.isdir(f"{BASE_PATH}/spy"):
 
 def get_spy_price(from_datetime, to_datetime):
 
-    file_path = f"{BASE_PATH}/spy/spy_{from_datetime.strftime('%Y_%m_%d')}_{to_datetime.strftime('%Y_%m_%d')}"
-    if os.path.exists(file_path):
-        df = pickle.load(open(file_path, "rb"))
-        return df
+    # file_path = f"{BASE_PATH}/spy/spy_{from_datetime.strftime('%Y_%m_%d')}_{to_datetime.strftime('%Y_%m_%d')}"
+    # if os.path.exists(file_path):
+    #     df = pickle.load(open(file_path, "rb"))
+    #     return df
 
     df = yf.download(
         "SPY", start=from_datetime, end=to_datetime
@@ -40,34 +41,53 @@ def get_spy_price(from_datetime, to_datetime):
 
     df = df.loc[:, ["price", "return"]]
 
-    pickle.dump(df, open(file_path, "wb"))
+    # pickle.dump(df, open(file_path, "wb"))
 
     return df
 
-def get_coin_price_binance(binance_symbol:str, from_datetime:datetime,
-    to_datetime:datetime)->Tuple[pd.DataFrame, str]:
+def get_coin_price_binance(binance_symbol:str, limit:int=1000, from_datetime:datetime=None,
+    to_datetime:datetime=None)->Tuple[pd.DataFrame, str]:
 
-    coin_data = BINANCE.get_klines(
-            binance_symbol,
-            "1d",
-            1000,
-            from_datetime,
-            to_datetime,
-    )
+    if days:=(to_datetime-from_datetime).days > 1000:
+        limits = days // 1000
+        limits = [1000 for _ in range(limits)]
+        if modulo:=days%1000:
+            limits += [modulo]
+        dfs = []
+        for l, lim in enumerate(limits):
+            dfs.append(
+                BINANCE.get_klines(
+                    binance_symbol,
+                    "1d",
+                    limit=lim,
+                    end_time=None if l == 0 else dfs[-1].loc[0, "open_time"]
+                )
+            )
+
+        coin_data = pd.concat(dfs)
+
+        coin_data.drop_duplicates(subset="open_time", keep="first", inplace=True)
+
+    else:
+        coin_data = BINANCE.get_klines(
+                binance_symbol,
+                "1d",
+                limit,
+                from_datetime,
+                to_datetime,
+        )
 
     df = coin_data.loc[:, ["close", "volume"]].copy()
 
     try:
 
-        df.loc[:, "date"] = coin_data.loc[:, "close_time"].dt.date
+        df.loc[:, "date"] = pd.to_datetime(
+            coin_data.loc[:, "close_time"].dt.date
+        )
 
-        df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
-
-    except:
-
-        df = pd.DataFrame(columns=["date", "price", "total_volume"])
-
-        return df
+    except Exception as e:
+        print(e)
+        df = pd.DataFrame(columns=["date", "close", "volume"])
 
     df.rename({"close": "price", "volume":"total_volume"}, axis=1, inplace=True)
 
@@ -100,51 +120,86 @@ def get_coin_price_coingecko(coin:list, from_datetime:datetime,
     return df, source
 
 def get_coin_price(coin:list,
-    from_datetime:datetime, to_datetime:datetime)->Tuple[pd.DataFrame, str]:
+    from_datetime:datetime, to_datetime:datetime, log_returns=True)->Tuple[pd.DataFrame, str]:
 
-    # file_path = f"{BASE_PATH}/coins/{coin[0]}_{from_datetime.strftime('%Y_%m_%d')}_{to_datetime.strftime('%Y_%m_%d')}"
-
-    # if os.path.exists(file_path):
-    #     df, source = pickle.load(open(file_path, "rb"))
-    #     return df, source
+    file_path = f"{BASE_PATH}/coins/{coin[0]}"
 
     if coin[1].upper() + "USDT" in BINANCE_COINS_LIST:
 
-        df, source = get_coin_price_binance(coin[1].upper() + "USDT", from_datetime, to_datetime)
+        try:
 
-        df.loc[:, "return"] = np.log1p(df.loc[:, "price"].pct_change())
+            df, source = get_coin_price_binance(
+                coin[1].upper() + "USDT",
+                from_datetime=from_datetime,
+                to_datetime=to_datetime
+            )
+
+            returns = df.loc[:, "price"].pct_change()
+
+            df.loc[:, "return"] = np.log1p(returns) if log_returns else returns
+
+            pickle.dump((df, source), open(file_path, "wb"))
+
+        except:
+
+            df, source = pickle.load(open(file_path, "rb"))
 
         return df, source
 
     elif coin[1].upper() + "BTC" in BINANCE_COINS_LIST:
 
-        df, source = get_coin_price_binance(coin[1].upper() + "BTC", from_datetime, to_datetime)
+        try:
 
-        df.loc[:, "return"] = np.log1p(df.loc[:, "price"].pct_change())
+            df, source = get_coin_price_binance(
+                coin[1].upper() + "BTC",
+                from_datetime=from_datetime,
+                to_datetime=to_datetime
+            )
+
+            returns = df.loc[:, "price"].pct_change()
+
+            df.loc[:, "return"] = np.log1p(returns) if log_returns else returns
+
+            pickle.dump((df, source), open(file_path, "wb"))
+
+        except:
+
+            df, source = pickle.load(open(file_path, "rb"))
 
         return df, source
 
     else:
 
-        file_path = f"{BASE_PATH}/coins/{coin[0]}_{from_datetime.strftime('%Y_%m_%d')}_{to_datetime.strftime('%Y_%m_%d')}"
-
         try:
             df, source = get_coin_price_coingecko(coin, from_datetime, to_datetime)
-            df.loc[:, "return"] = np.log1p(df.loc[:, "price"].pct_change())
+            returns = df.loc[:, "price"].pct_change()
+            df.loc[:, "return"] = np.log1p(returns) if log_returns else returns
             pickle.dump((df, source), open(file_path, "wb"))
         except:
-            if os.path.exists(file_path):
-                df, source = pickle.load(open(file_path, "rb"))
+
+            df, source = pickle.load(open(file_path, "rb"))
 
         return df, source
 
 def get_coins_market_caps_cg()->list:
-    return COINGECKO.get_coins_markets(
-        vs_currency='usd',
-        include_market_cap="true"
-    )
-<<<<<<< HEAD
 
-#TODO: arreglar pedido de datos a binance cuando el rango excede los 100 dias.
-=======
->>>>>>> c9dea976c8aa5e6c4182eb04d6b0fd00f27a5115
+    file_path = f"{BASE_PATH}/mkt_cap"
+
+    try:
+
+        mkt_caps = COINGECKO.get_coins_markets(
+            vs_currency='usd',
+            include_market_cap="true"
+        )
+
+        pickle.dump(mkt_caps, open(file_path, "wb"))
+
+    except Exception as e:
+
+        print(e)
+
+        mkt_caps = pickle.load(open(file_path, "rb"))
+
+    return mkt_caps
+
+#TODO: arreglar pedido de datos a binance cuando el rango excede los 1000 dias.

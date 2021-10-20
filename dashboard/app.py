@@ -127,14 +127,14 @@ def run_app():
         names
     )
 
-    # DATE INPUT
-    MIN_VALUE = datetime(2017,1,1)
-    dates = st.date_input(
-        "Seleccione el rango de fechas",
-        [INIT_DATE, TODAY.date()],
-        min_value=MIN_VALUE,
-        max_value=datetime(TODAY.year, TODAY.month, TODAY.day)
-    )
+    # # DATE INPUT
+    # MIN_VALUE = datetime(2017,1,1)
+    # dates = st.date_input(
+    #     "Seleccione el rango de fechas",
+    #     [INIT_DATE, TODAY.date()],
+    #     min_value=MIN_VALUE,
+    #     max_value=datetime(TODAY.year, TODAY.month, TODAY.day)
+    # )
 
     # DOWNLOADING PRICE DATA
     coin = coins_by_market_cap.loc[
@@ -142,11 +142,12 @@ def run_app():
         ["id", "symbol"]
     ].values.ravel()
 
-    from_datetime = datetime(dates[0].year, dates[0].month, dates[0].day)
+    # from_datetime = datetime(dates[0].year, dates[0].month, dates[0].day)
 
-    to_datetime = datetime(dates[1].year, dates[1].month, dates[1].day)
+    # to_datetime = datetime(dates[1].year, dates[1].month, dates[1].day)
 
-    df, source = get_coin_price(coin, from_datetime, to_datetime)
+    with st.spinner("Descargando datos"):
+        df, source = get_coin_price(coin, INIT_DATE, datetime(TODAY.year, TODAY.month, TODAY.day))
 
     st.markdown(f"**Source**: {source}")
 
@@ -159,7 +160,7 @@ def run_app():
     st.dataframe(coin_stats.style.format(formatter="{:.3%}"), width=660)
 
     # COIN CHARTS
-    price_chart, return_chart, return_dist = make_coin_plots(df)
+    price_chart, return_chart, return_dist, boxplot = make_coin_plots(df)
 
     st.altair_chart(
         price_chart,
@@ -173,5 +174,10 @@ def run_app():
 
     st.altair_chart(
         return_dist,
+        use_container_width=True
+    )
+
+    st.altair_chart(
+        boxplot,
         use_container_width=True
     )
