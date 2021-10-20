@@ -15,6 +15,8 @@ BINANCE_COINS_LIST = BINANCE.get_crypto_list()
 
 BASE_PATH = "./dashboard/data"
 
+ret_log = True # True si queres retornos logaritmicos, False si queres normales
+
 if not os.path.isdir(BASE_PATH):
     os.mkdir(BASE_PATH)
 
@@ -35,7 +37,8 @@ def get_spy_price(from_datetime, to_datetime):
         "SPY", start=from_datetime, end=to_datetime
     )
 
-    df.loc[:, "return"] = np.log1p(df.loc[:, "Adj Close"].pct_change())
+    if (ret_log): df.loc[:, "return"] = np.log1p(df.loc[:, "Adj Close"].pct_change())
+    else: df.loc[:, "return"] = df.loc[:, "Adj Close"].pct_change()
 
     df.rename({"Adj Close": "price"}, axis=1, inplace=True)
 
@@ -128,6 +131,7 @@ def get_coin_price(coin:list,
 
         try:
 
+<<<<<<< HEAD
             df, source = get_coin_price_binance(
                 coin[1].upper() + "USDT",
                 from_datetime=from_datetime,
@@ -143,6 +147,11 @@ def get_coin_price(coin:list,
         except:
 
             df, source = pickle.load(open(file_path, "rb"))
+=======
+        if (ret_log): df.loc[:, "return"] = np.log1p(df.loc[:, "price"].pct_change())
+        else: df.loc[:, "return"] = df.loc[:, "price"].pct_change()
+
+>>>>>>> 8a5ec4426ab00ef1a78fab080adaf38201a869bb
 
         return df, source
 
@@ -156,6 +165,7 @@ def get_coin_price(coin:list,
                 to_datetime=to_datetime
             )
 
+<<<<<<< HEAD
             returns = df.loc[:, "price"].pct_change()
 
             df.loc[:, "return"] = np.log1p(returns) if log_returns else returns
@@ -165,6 +175,10 @@ def get_coin_price(coin:list,
         except:
 
             df, source = pickle.load(open(file_path, "rb"))
+=======
+        if (ret_log): df.loc[:, "return"] = np.log1p(df.loc[:, "price"].pct_change())
+        else: df.loc[:, "return"] = df.loc[:, "price"].pct_change()
+>>>>>>> 8a5ec4426ab00ef1a78fab080adaf38201a869bb
 
         return df, source
 
@@ -175,6 +189,7 @@ def get_coin_price(coin:list,
             returns = df.loc[:, "price"].pct_change()
             df.loc[:, "return"] = np.log1p(returns) if log_returns else returns
             pickle.dump((df, source), open(file_path, "wb"))
+
         except:
 
             df, source = pickle.load(open(file_path, "rb"))
@@ -182,6 +197,7 @@ def get_coin_price(coin:list,
         return df, source
 
 def get_coins_market_caps_cg()->list:
+<<<<<<< HEAD
 
     file_path = f"{BASE_PATH}/mkt_cap"
 
@@ -203,3 +219,15 @@ def get_coins_market_caps_cg()->list:
     return mkt_caps
 
 #TODO: arreglar pedido de datos a binance cuando el rango excede los 1000 dias.
+=======
+    return COINGECKO.get_coins_markets(
+        vs_currency='usd',
+        include_market_cap="true"
+    )
+
+<<<<<<< HEAD
+
+#TODO: arreglar pedido de datos a binance cuando el rango excede los 100 dias.
+=======
+>>>>>>> c9dea976c8aa5e6c4182eb04d6b0fd00f27a5115
+>>>>>>> 8a5ec4426ab00ef1a78fab080adaf38201a869bb
