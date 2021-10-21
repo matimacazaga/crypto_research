@@ -207,6 +207,14 @@ def get_coins_market_caps_cg()->list:
 
     return mkt_caps
 
-#TODO: arreglar pedido de datos a binance cuando el rango excede los 1000 dias.
+def load_coins_on_chain_metrics()->pd.DataFrame:
+
+    df = pickle.load(open("./dashboard/data/coins_metrics", "rb"))
+
+    cols = ["coin"] + [col for col in df.columns if col != "coin"]
+
+    df.dropna(axis=0, how="all", subset=[col for col in cols if col!= "coin"], inplace=True)
+
+    return df.loc[:, cols]
 
 

@@ -1,41 +1,39 @@
 
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
+import pickle
 import streamlit as st
-from .utils import top_100_by_mkt_cap, get_stats, make_coin_plots, get_coin_stats
-from .data_management import get_coin_price, get_spy_price, get_coins_market_caps_cg
+from .utils import *
+from .data_management import *
 import altair as alt
 import pandas as pd
+from .config import *
+
+
+METRICS_DESC = pickle.load(open("./dashboard/data/metrics_description", "rb"))
+
+def describe_metric(metric_to_describe:str)->None:
+
+    d = [d for d in METRICS_DESC if d["id"] == metric_to_describe][0]
+
+    st.markdown(
+        f"**Name**: {d['name']}"
+    )
+
+    st.markdown(
+        f"**Category**: {d['category']}"
+    )
+
+    st.markdown(
+        f"**Description**: {d['description']}"
+    )
 
 def run_app():
 
-    # CONSTANTS
-    COLUMNS = [
-        "id",
-        "symbol",
-        "name",
-        "market_cap",
-        "market_cap_rank",
-        "current_price",
-        "total_volume",
-        "circulating_supply",
-        "max_supply"
-    ]
-
-    TODAY = datetime.now()
-    TODAY_STR = TODAY.strftime("%Y-%m-%d %H:%M:%S")
-
-    INIT_DATE = TODAY - relativedelta(years=2)
-
-    INIT_DATE = datetime(INIT_DATE.year, INIT_DATE.month, INIT_DATE.day)
-
-    BTC, _ = get_coin_price(["bitcoin", "btc"], INIT_DATE, datetime(TODAY.year, TODAY.month, TODAY.day))
-    BTC.set_index("date", inplace=True)
-
-    SPY = get_spy_price(INIT_DATE, datetime(TODAY.year, TODAY.month, TODAY.day))
-
     # DATA DOWNLOADING
     with st.spinner("Descargando datos"):
+        BTC, _ = get_coin_price(["bitcoin", "btc"], INIT_DATE, datetime(TODAY.year, TODAY.month, TODAY.day))
+        BTC.set_index("date", inplace=True)
+        SPY = get_spy_price(INIT_DATE, datetime(TODAY.year, TODAY.month, TODAY.day))
         coins_markets = get_coins_market_caps_cg()
         coins_by_market_cap = top_100_by_mkt_cap(coins_markets, COLUMNS)
         coins = coins_by_market_cap.loc[:, ["id", "symbol"]].values
@@ -114,6 +112,24 @@ def run_app():
     )
 
     st.altair_chart(c, use_container_width=True)
+
+    # On chain metrics
+    st.subheader("Métricas On-Chain")
+
+    df = load_coins_on_chain_metrics()
+
+    st.write(df.style.format(
+        formatter={tuple(col for col in df.columns.tolist() if col!="coin"): "{:.3f}"}
+    ))
+
+    with st.expander("Descripción de las métricas"):
+
+        metric_to_describe = st.selectbox(
+            'Seleccionar una métrica',
+            [d["id"] for d in METRICS_DESC],
+        )
+
+        describe_metric(metric_to_describe)
 
     # ANALYSIS BY COIN
     st.subheader("Análisis por criptomoneda")
