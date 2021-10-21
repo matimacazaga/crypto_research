@@ -136,7 +136,7 @@ def run_app():
 
     st.altair_chart(cluster_chart, use_container_width=True)
 
-    st.markdown("Estadísticas de portafolios creados a partir de los clusters, utilizando Mkt. Cap. como peso")
+    st.markdown("Estadísticas de portafolios creados a partir de los clusters, utilizando Mkt. Cap. como peso.")
 
     df = pickle.load(open("./dashboard/data/clusters_stats", "rb"))
 
