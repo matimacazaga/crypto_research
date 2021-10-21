@@ -95,7 +95,7 @@ def get_coin_stats(df:pd.DataFrame)->pd.DataFrame:
 
     return coin_stats
 
-def make_coin_plots(df):
+def make_coin_plots(df:pd.DataFrame):
 
     interval = alt.selection_interval(encodings=['x'])
 
@@ -186,3 +186,52 @@ def make_coin_plots(df):
     )
 
     return price_chart & price_view, return_chart & return_view, return_dist + return_dist_norm, boxplot
+
+def make_cluster_plot(df:pd.DataFrame):
+    c = alt.Chart(df).mark_circle().encode(
+        x = "PC1:Q",
+        y = "PC2:Q",
+        tooltip=[
+            "symbol:N",
+            alt.Tooltip("CapRealUSD:Q", format=",.0f", title="Realized Cap."),
+            alt.Tooltip("TxCntSec:Q", format=".3f", title="TPS"),
+            alt.Tooltip("CapMVRVCur:Q", format=".2f", title="Mkt. Cap. / Real. Cap."),
+            alt.Tooltip("AdrActCnt:Q", format=",.0f", title="Average active addresses per day (15 days)")
+        ],
+        color="cluster:N",
+        size=alt.Size("CapRealUSD:Q", scale=alt.Scale(type="log"), title="Realized Cap.")
+    ).interactive()
+
+    return c
+
+def make_clusters_stats_plot(clusters_stats:pd.DataFrame):
+
+    c = alt.Chart(clusters_stats).mark_point(size=100).encode(
+        x=alt.X("mean_ret:Q", title="Retorno promedio (Anualizado)"),
+        y=alt.Y("std:Q", title="Volatilidad (Anualizada)"),
+        color=alt.Color("sharpe:Q", scale=alt.Scale(scheme="viridis")),
+        shape="cluster:N",
+        tooltip=[
+            alt.Tooltip(
+                "mean_ret:Q",
+                title="Retorno promedio (Anualizado)",
+                format=".2%"
+            ),
+            alt.Tooltip(
+                "std:Q",
+                title="Volatilidad (Anualizada)",
+                format=".2%"
+            ),
+            alt.Tooltip(
+                "sharpe:Q",
+                title="Sharpe Ratio (Anualizado)",
+                format=".2f"
+            ),
+            alt.Tooltip(
+                "symbols",
+                title="Simbolos"
+            )
+        ]
+    ).properties(height=400)
+
+    return c

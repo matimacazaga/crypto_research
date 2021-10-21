@@ -100,21 +100,21 @@ def get_coin_price_binance(binance_symbol:str, limit:int=1000, from_datetime:dat
 
 
 def get_coin_price_coingecko(coin:list, from_datetime:datetime,
-    to_datetime:datetime)->Tuple[pd.DataFrame, str]:
+    to_datetime:datetime, include_mkt_cap:bool=False)->Tuple[pd.DataFrame, str]:
 
     coin_data = COINGECKO.get_coin_market_chart_range_by_id(
             id=coin[0], vs_currency='usd',from_timestamp=from_datetime.timestamp(),to_timestamp=to_datetime.timestamp()
     )
 
-    dates = [l[0] for l in coin_data["prices"]]
-    prices = [l[1] for l in coin_data["prices"]]
-    volumes = [l[1] for l in coin_data["total_volumes"]]
+    df = {}
+    df["date"] = [l[0] for l in coin_data["prices"]]
+    df["price"] = [l[1] for l in coin_data["prices"]]
+    df["total_volume"] = [l[1] for l in coin_data["total_volumes"]]
 
-    df = pd.DataFrame({
-        "date": dates,
-        "price": prices,
-        "total_volume": volumes,
-    })
+    if include_mkt_cap:
+        df["mkt_cap"] = [l[1] for l in coin_data["market_caps"]]
+
+    df = pd.DataFrame(df)
 
     df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"], origin="unix", unit="ms")
 
@@ -209,12 +209,18 @@ def get_coins_market_caps_cg()->list:
 
 def load_coins_on_chain_metrics()->pd.DataFrame:
 
-    df = pickle.load(open("./dashboard/data/coins_metrics", "rb"))
+    df = pickle.load(open(f"{BASE_PATH}/coins_metrics", "rb"))
 
-    cols = ["coin"] + [col for col in df.columns if col != "coin"]
+    cols = ["symbol"] + [col for col in df.columns if col != "symbol"]
 
     df.dropna(axis=0, how="all", subset=[col for col in cols if col!= "coin"], inplace=True)
 
     return df.loc[:, cols]
+
+def load_cluster_df()->pd.DataFrame:
+
+    df = pickle.load(open(f"{BASE_PATH}/df_clustering", "rb"))
+
+    return df
 
 

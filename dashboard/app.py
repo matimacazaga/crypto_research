@@ -113,14 +113,36 @@ def run_app():
 
     st.altair_chart(c, use_container_width=True)
 
-    # On chain metrics
+    #ON CHAIN ANALYSIS
     st.subheader("Métricas On-Chain")
 
     df = load_coins_on_chain_metrics()
 
-    st.write(df.style.format(
-        formatter={tuple(col for col in df.columns.tolist() if col!="coin"): "{:.3f}"}
+    st.dataframe(df.style.format(
+        formatter={
+            col: "{:.3f}" for col in df.columns.tolist() if col!= "symbol"
+        }
     ))
+
+    df = load_cluster_df()
+
+    st.markdown("### Clustering")
+
+    cols = df.drop(["symbol", "cluster", "PC1", "PC2"], axis=1).columns.tolist()
+
+    st.markdown(f"Para realizar el *clustering* se utilizaron las siguientes variables: {', '.join(cols)}")
+
+    cluster_chart = make_cluster_plot(df)
+
+    st.altair_chart(cluster_chart, use_container_width=True)
+
+    st.markdown("Estadísticas de portafolios creados a partir de los clusters, utilizando Mkt. Cap. como peso")
+
+    df = pickle.load(open("./dashboard/data/clusters_stats", "rb"))
+
+    clusters_stats_chart = make_clusters_stats_plot(df)
+
+    st.altair_chart(clusters_stats_chart, use_container_width=True)
 
     with st.expander("Descripción de las métricas"):
 
