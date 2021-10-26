@@ -57,7 +57,11 @@ def compute_stats(coin, from_datetime, to_datetime, spy:pd.DataFrame, btc:pd.Dat
 
     sharpe_ratio = (mean_return / volatility)
 
-    return {"name": coin[1], "spy_corr": spy_corr, "spy2_corr": spy2_corr,"btc_corr": btc_corr, "beta_capm_crypto": slope, "mean_return": mean_return, "volatility": volatility, "sharpe_ratio": sharpe_ratio}
+    dd = df[df['return'] < 0]['return'].std() * np.sqrt(365.)
+
+    sortino_ratio = (mean_return / dd)
+
+    return {"name": coin[1], "spy_corr": spy_corr, "spy2_corr": spy2_corr, "btc_corr": btc_corr, "beta_capm_crypto": slope, "mean_return": mean_return, "volatility": volatility, "sharpe_ratio": sharpe_ratio, "sortino_ratio": sortino_ratio}
 
 def get_stats(coins:list, from_datetime:str, to_datetime:str, spy:pd.DataFrame, btc:pd.DataFrame):
 
