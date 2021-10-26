@@ -1,5 +1,6 @@
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+BASE_PATH = "./dashboard/data"
 
 COLUMNS = [
         "id",
