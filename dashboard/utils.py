@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 import altair as alt
 from joblib import Parallel, delayed
-from .data_management import get_coin_price
+#from .data_management import get_coin_price
 import pickle
 import os
 import yfinance as yf
@@ -18,58 +18,141 @@ def top_100_by_mkt_cap(coins_markets:dict, columns:list)->pd.DataFrame:
 
     return coins_market_cap.loc[:, columns]
 
-def compute_stats(coin, from_datetime, to_datetime, spy:pd.DataFrame, btc:pd.DataFrame):
+def compute_coin_stats(coin_history:tuple, spy:pd.DataFrame, btc:pd.DataFrame):
+    """
+    Computes coin's statistics:
+        - Correlation with spy and btc
+        - Mean return, volatility, Sharpe ratio and Sortino ratio.
 
-    coin_data, _ = get_coin_price(coin, from_datetime, to_datetime)
+    Parameters
+    ----------
+    coin_history: tuple[str, tuple[pd.Dataframe, str]]
+        Tuple containing the symbol of the coin in the first element, and
+        another tuple in the second element. The tuple in the second element
+        has the coin history in the first element and the data source in the
+        second element.
+    spy: pd.Dataframe
+        History of the SPY etf.
+    btc: pd.DataFrame
+        History of BTC.
 
-    df = coin_data.set_index("date")
-
-    df.index = pd.to_datetime(df.index)
+    Returns
+    -------
+    output: dict
+        Dictionary containing the statistics and name of the coin.
+    """
+    df = coin_history[1][0].copy()
 
     # junto los dataframes en un nuevo dataframe
-    result = pd.concat([df, spy], axis=1)
+    result = df.merge(spy, on="date", how="outer", suffixes=["", "_spy"])
+    result = result.merge(btc, on="date", how="outer", suffixes=["", "_btc"])
+    result['agg_ret'] = result.loc[:,"return"]
 
-    # creo la nueva columna de aggregate returns y la igualo al retorno del dia
-    result['agg_ret'] = result.iloc[:,2]
+    mask_1 = result.shift(1).loc[:, "return_spy"].isna()
+    mask_2 = result.shift(2).loc[:, "return_spy"].isna()
 
-    # si los datos para el spy de los dos dias anteriores son NaN, el agg_ret pasa a ser la suma de las ultimas 3 observaciones
-    result.loc[pd.isna(result.shift(1).iloc[:,3]) & pd.isna(result.shift(2).iloc[:,3]),
-     'agg_ret'] = result.iloc[:,2] + result.shift(1).iloc[:,2] + result.shift(2).iloc[:,2]
+    result.loc[mask_1 & mask_2,'agg_ret'] = result.loc[:,"return"] +\
+         result.shift(1).loc[:,"return"] +\
+              result.shift(2).loc[:,"return"]
 
-    result = result.dropna()
+    spy_corr = result.loc[:, "return"].corr(result.loc[:, "return_spy"])
+    spy_corr_2 = result.loc[:,"agg_ret"].corr(result.loc[:,"return_spy"])
+    btc_corr = result.loc[:, "return"].corr(result.loc[:, "return_btc"])
 
-    # encuentro las correlaciones
-    spy2_corr = result.iloc[:,4].astype(float).corr(result.iloc[:,5].astype(float))
 
-    dates_spy = spy.dropna().index.intersection(df.dropna().index)
+    slope, _, _, _, _ = stats.linregress(
+        result.dropna(subset=["return", "return_btc"]).loc[:, "return_btc"].values,
+        result.dropna(subset=["return", "return_btc"]).loc[:, "return"].values
+    )
 
-    dates_btc = btc.dropna().index.intersection(df.dropna().index)
+    mean_return = result.loc[:, "return"].mean() * 365.
 
-    spy_corr = np.corrcoef([df.loc[dates_spy, "return"].values, spy.loc[dates_spy, "return"].values])[0,1]
-
-    btc_corr = np.corrcoef([df.loc[dates_btc, "return"].values, btc.loc[dates_btc, "return"].values])[0,1]
-
-    slope, _, _, _, _ = stats.linregress(btc.loc[dates_btc, "return"].values, df.loc[dates_btc, "return"].values)
-
-    mean_return = coin_data.loc[:, "return"].mean() * 365.
-
-    volatility = coin_data.loc[:, "return"].std(ddof=1) * np.sqrt(365.)
+    volatility = result.loc[:, "return"].std(ddof=1) * np.sqrt(365.)
 
     sharpe_ratio = (mean_return / volatility)
 
-    dd = df[df['return'] < 0]['return'].std() * np.sqrt(365.)
+    dd = result.loc[result.loc[:, 'return'] < 0,'return'].std() * np.sqrt(365.)
 
     sortino_ratio = (mean_return / dd)
 
-    return {"name": coin[1], "spy_corr": spy_corr, "spy2_corr": spy2_corr, "btc_corr": btc_corr, "beta_capm_crypto": slope, "mean_return": mean_return, "volatility": volatility, "sharpe_ratio": sharpe_ratio, "sortino_ratio": sortino_ratio}
+    output = {
+        "symbol": coin_history[0],
+        "spy_corr": spy_corr,
+        "spy_corr_2": spy_corr_2,
+        "btc_corr": btc_corr,
+        "beta_capm_crypto": slope,
+        "mean_return": mean_return,
+        "volatility": volatility,
+        "sharpe_ratio": sharpe_ratio,
+        "sortino_ratio": sortino_ratio
+    }
 
-def get_stats(coins:list, from_datetime:str, to_datetime:str, spy:pd.DataFrame, btc:pd.DataFrame):
+    return output
 
-    stats = Parallel(n_jobs=20, backend="threading")(delayed(compute_stats)(coin, from_datetime, to_datetime, spy, btc) for coin in coins)
 
+# def compute_stats(coin, from_datetime, to_datetime, spy:pd.DataFrame, btc:pd.DataFrame):
+
+#     coin_data, _ = get_coin_price(coin, from_datetime, to_datetime)
+
+#     df = coin_data.set_index("date")
+
+#     df.index = pd.to_datetime(df.index)
+
+#     # junto los dataframes en un nuevo dataframe
+#     result = pd.concat([df, spy], axis=1)
+
+#     # creo la nueva columna de aggregate returns y la igualo al retorno del dia
+#     result['agg_ret'] = result.iloc[:,2]
+
+#     # si los datos para el spy de los dos dias anteriores son NaN, el agg_ret pasa a ser la suma de las ultimas 3 observaciones
+#     result.loc[pd.isna(result.shift(1).iloc[:,3]) & pd.isna(result.shift(2).iloc[:,3]),
+#      'agg_ret'] = result.iloc[:,2] + result.shift(1).iloc[:,2] + result.shift(2).iloc[:,2]
+
+#     result = result.dropna()
+
+#     # encuentro las correlaciones
+#     spy2_corr = result.iloc[:,4].astype(float).corr(result.iloc[:,5].astype(float))
+
+#     dates_spy = spy.dropna().index.intersection(df.dropna().index)
+
+#     dates_btc = btc.dropna().index.intersection(df.dropna().index)
+
+#     spy_corr = np.corrcoef([df.loc[dates_spy, "return"].values, spy.loc[dates_spy, "return"].values])[0,1]
+
+#     btc_corr = np.corrcoef([df.loc[dates_btc, "return"].values, btc.loc[dates_btc, "return"].values])[0,1]
+
+#     slope, _, _, _, _ = stats.linregress(btc.loc[dates_btc, "return"].values, df.loc[dates_btc, "return"].values)
+
+#     mean_return = coin_data.loc[:, "return"].mean() * 365.
+
+#     volatility = coin_data.loc[:, "return"].std(ddof=1) * np.sqrt(365.)
+
+#     sharpe_ratio = (mean_return / volatility)
+
+#     dd = df[df['return'] < 0]['return'].std() * np.sqrt(365.)
+
+#     sortino_ratio = (mean_return / dd)
+
+#     return {"name": coin[1], "spy_corr": spy_corr, "spy2_corr": spy2_corr, "btc_corr": btc_corr, "beta_capm_crypto": slope, "mean_return": mean_return, "volatility": volatility, "sharpe_ratio": sharpe_ratio, "sortino_ratio": sortino_ratio}
+
+def get_coins_stats(coins_history:dict, spy:pd.DataFrame, btc:pd.DataFrame)->pd.DataFrame:
+
+    # stats = Parallel(n_jobs=2)(delayed(compute_coin_stats)(coin_history, spy, btc) for coin_history in coins_history.items())
+
+    stats = []
+    for coin_history in coins_history.items():
+        stats.append(
+            compute_coin_stats(coin_history, spy, btc)
+        )
     return pd.DataFrame(stats)
 
-def get_coin_stats(df:pd.DataFrame)->pd.DataFrame:
+# def get_stats(coins:list, from_datetime:str, to_datetime:str, spy:pd.DataFrame, btc:pd.DataFrame):
+
+#     stats = Parallel(n_jobs=-1, backend="threading")(delayed(compute_stats)(coin, from_datetime, to_datetime, spy, btc) for coin in coins)
+
+#     return pd.DataFrame(stats)
+
+def get_coin_returns_stats(df:pd.DataFrame)->pd.DataFrame:
 
     coin_stats = {}
 

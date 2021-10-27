@@ -3,5 +3,5 @@
 Para iniciar el dashboard, correr desde la terminal
 
 ```bash
-streamlit run run_dashboard.py
+streamlit run ./dashboard/app.py
 ```

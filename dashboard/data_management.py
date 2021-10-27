@@ -8,7 +8,7 @@ import os
 # import pandas as pd
 # import numpy as np
 # import time
-from .config import BASE_PATH
+from config import BASE_PATH
 # COINGECKO = CoinGeckoAPI()
 # BINANCE = BinanceWrapper()
 # BINANCE_COINS_LIST = BINANCE.get_crypto_list()
@@ -223,7 +223,7 @@ if not os.path.isdir(f"{BASE_PATH}/spy"):
 
 from joblib import Parallel, delayed
 from pycoingecko import CoinGeckoAPI
-from .livecoinwatch_wrapper import LiveCoinWatchWrapper
+from livecoinwatch_wrapper import LiveCoinWatchWrapper
 from dateutil.relativedelta import relativedelta
 import pickle
 import pandas as pd
@@ -375,26 +375,48 @@ class DataManager:
         return df.loc[:, ["date", "price", "return", "volume"]], exchange_
 
 
+    def _historical_coin_info_livewatch(self, symbol:str, from_date:datetime,
+        to_date:datetime):
+
+        try:
+            df = self.livecoinwatch.historical_coin_info(
+                "USD", symbol, from_date, to_date
+            )
+
+        except:
+
+            df = {"history": pd.DataFrame(columns=["date", "mkt_cap", "price", "volume", "return"])}
+
+        return df
+
+
     def _get_coin_history_livecoinwatch(self, symbol:str, from_date:datetime,
         to_date:datetime, log_returns:bool=True):
 
         days = (to_date-from_date).days
-        dates = [from_date]
-        for d in range(days//100):
-            if d == 0:
-                dates.append(from_date + relativedelta(days=100))
-            else:
-                dates.append(dates[-1] + relativedelta(days=100))
+        if days>100:
+            dates = [from_date]
+            for d in range(days//100):
+                if d == 0:
+                    dates.append(from_date + relativedelta(days=100))
+                else:
+                    dates.append(dates[-1] + relativedelta(days=100))
 
-        dates.append(to_date)
+            dates.append(to_date)
 
-        df = Parallel(
-            n_jobs=len(dates)-1, backend="threading"
-        )(delayed(
-            self.livecoinwatch.historical_coin_info
-        )("USD", symbol, dates[i], dates[i+1]) for i in range(len(dates)-1))
+            df = Parallel(
+                n_jobs=len(dates)-1, backend="threading"
+            )(delayed(
+                self._historical_coin_info_livewatch
+            )(symbol, dates[i], dates[i+1]) for i in range(len(dates)-1))
 
-        df = pd.concat([d["history"] for d in df])
+            df = pd.concat([d["history"] for d in df])
+
+        else:
+
+            df = self.livecoinwatch.historical_coin_info(
+                "USD", symbol, from_date, to_date
+            )["history"]
 
         df.set_index("date", inplace=True)
 
@@ -490,14 +512,18 @@ class DataManager:
 
         df = self.livecoinwatch.current_coins_info(
             currency="USD", sort="rank", order="ascending",
-            offset=offset, limit=limit,
+            offset=offset, limit=limit, meta=True
         )
 
-        df.rename({"code": "symbol", "cap": "mkt_cap"}, axis=1, inplace=True)
+        if "symbol" in df.columns:
+
+            df.drop("symbol", axis=1, inplace=True)
+
+        df.rename({"code": "symbol", "cap": "mkt_cap", "rate": "price"}, axis=1, inplace=True)
 
         df.loc[:, "symbol"] = df.loc[:, "symbol"].str.strip("_")
 
-        return df.loc[:, ["symbol", "mkt_cap", "volume"]]
+        return df.loc[:, ["symbol", "price", "mkt_cap", "volume", "allTimeHighUSD", "circulatingSupply", "maxSupply"]]
 
     @staticmethod
     def load_coins_on_chain_metrics()->pd.DataFrame:
@@ -532,9 +558,9 @@ class DataManager:
 
         df.loc[:, "return"] = np.log1p(returns) if log_returns else returns
 
-        df.rename({"Adj Close": "price"}, axis=1, inplace=True)
+        df = df.loc[:, ["Adj Close", "return"]].reset_index()
 
-        df = df.loc[:, ["price", "return"]].reset_index()
+        df.rename({"Date": "date", "Adj Close": "price"}, axis=1, inplace=True)
 
         return df.dropna()
 
