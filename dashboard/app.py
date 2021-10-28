@@ -327,6 +327,14 @@ def run_app():
 
     # DAILY RETURNS STATS
 
+    st.markdown("### Descripción de la criptomoneda")
+
+    coins_dict = json.load(open("./crypto_classification/coins2.json"))
+
+    try:
+        st.markdown(f"**Description**: {coins_dict[selected_symbol.lower()]['desc']}")
+    except:
+        st.markdown('Description not available')
     st.markdown("### Daily returns statistics")
 
     coin_stats = get_coin_returns_stats(df)
