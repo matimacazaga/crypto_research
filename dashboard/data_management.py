@@ -8,7 +8,7 @@ import os
 # import pandas as pd
 # import numpy as np
 # import time
-from config import BASE_PATH
+from .config import BASE_PATH
 # COINGECKO = CoinGeckoAPI()
 # BINANCE = BinanceWrapper()
 # BINANCE_COINS_LIST = BINANCE.get_crypto_list()
@@ -223,7 +223,7 @@ if not os.path.isdir(f"{BASE_PATH}/spy"):
 
 from joblib import Parallel, delayed
 from pycoingecko import CoinGeckoAPI
-from livecoinwatch_wrapper import LiveCoinWatchWrapper
+from .livecoinwatch_wrapper import LiveCoinWatchWrapper
 from dateutil.relativedelta import relativedelta
 import pickle
 import pandas as pd
@@ -232,7 +232,7 @@ import json
 from datetime import datetime
 import numpy as np
 import yfinance as yf
-
+import requests
 
 class CoinNotFound(Exception):
 
@@ -257,6 +257,59 @@ class DataManager:
         self.coingecko = CoinGeckoAPI()
 
         self.coins_dict = json.load(open("./crypto_classification/coins1.json"))
+
+        self.messari_api = "https://data.messari.io/api/v2"
+
+    @staticmethod
+    def _df_agg(df:pd.DataFrame, col:str)->pd.DataFrame:
+        """
+        Aggregates symbols information by col, and calculates the total
+        mkt cap, count and symbols by group.
+
+        Parameters
+        ----------
+        df: pd.DataFrame
+            DataFrame with symbols information (mkt_cap, symbol, sector,
+            category)
+        col: str
+            Col to group by.
+        """
+        df_agg = df.groupby(col).agg(
+            {
+                "mkt_cap": [("mkt_cap", "sum")],
+                "symbol": [("symbols", lambda x: x.tolist()), ("count", "count")]
+            }
+        ).droplevel(0, axis=1).reset_index()
+
+        df_agg.loc[:, "mkt_cap_pct"] = df_agg.loc[:, "mkt_cap"] / df_agg.loc[:, "mkt_cap"].sum()
+        df_agg.sort_values("count", inplace=True, ascending=False)
+
+        return df_agg
+
+
+    def get_coins_information(self,):
+
+        r = requests.get(self.messari_api + "/assets?limit=100")
+
+        d = r.json()
+
+        symbols_information = {
+            l["symbol"]: {
+                "sector": l["profile"]["general"]["overview"]["sector"],
+                "category":  l["profile"]["general"]["overview"]["category"],
+                "mkt_cap": l["metrics"]["marketcap"]["current_marketcap_usd"]
+            } for l in d["data"]
+        }
+
+        symbols_information = pd.DataFrame.from_dict(
+            symbols_information, orient="index"
+        ).reset_index().rename({"index": "symbol"}, axis=1)
+
+        sector_agg = self._df_agg(symbols_information, "sector")
+
+        category_agg = self._df_agg(symbols_information, "category")
+
+        return symbols_information, sector_agg, category_agg
 
 
     def _get_exchange_markets(self, exchange:str):

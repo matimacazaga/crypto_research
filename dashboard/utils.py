@@ -182,6 +182,86 @@ def get_coin_returns_stats(df:pd.DataFrame)->pd.DataFrame:
 
     return coin_stats
 
+
+
+def get_portfolios_by_col(coins_history:dict, df_agg:pd.DataFrame, col:str):
+    """
+    Get portfolios by sector or category.
+
+    Parameters
+    ----------
+    coins_history: dict
+        Dictionary with the history of each coin (price and mkt cap).
+    df_agg: DataFrame
+        DataFrame with the aggregated information by col.
+    col: str
+        Name of the col used to group the data.
+
+    Returns
+    -------
+    portfolios: dict
+        Dictionary with the groups as keys and DataFrames as values containing
+        portfolio price, return and mkt_cap weighted price of its components.
+    """
+    portfolios = {}
+
+    for _, row in df_agg.iterrows():
+        if row["count"]>1:
+            mkt_caps = []
+            prices = []
+            for symbol in row["symbols"]:
+                if symbol not in coins_history:
+                    continue
+
+                mkt_caps.append(coins_history[symbol][0].rename({"mkt_cap": symbol}, axis=1).set_index("date").loc[:, symbol])
+                prices.append(coins_history[symbol][0].rename({"price": symbol}, axis=1).set_index("date").loc[:, symbol])
+            mkt_caps = pd.concat(mkt_caps, axis=1)
+            prices = pd.concat(prices, axis=1)
+            portfolio = (mkt_caps.divide(mkt_caps.sum(axis=1), axis=0).shift(1).iloc[1:] * prices.iloc[1:]).fillna(0.)
+            portfolio.loc[:, "price"] = portfolio.sum(axis=1)
+            #TODO: add log returns
+            portfolio.loc[:, "return"] = portfolio.loc[:, "price"].pct_change()
+            portfolios[row[col]] = portfolio
+        else:
+            portfolio = coins_history[row["symbols"][0]][0].loc[:, ["date", "price"]]
+            #TODO: add log returns
+            portfolio.loc[:, "return"] = portfolio.loc[:, "price"].pct_change()
+            portfolios[row[col]] = portfolio
+
+    return portfolios
+
+
+def get_portfolios_stats(portfolios:dict, colname:str):
+    dfs = []
+
+    for col, portfolio in portfolios.items():
+
+        mean_return = portfolio.loc[:, "return"].mean()*365
+        volatility = portfolio.loc[:, "return"].std()*np.sqrt(365)
+        sharpe_ratio = mean_return / volatility
+        dd = portfolio.loc[portfolio.loc[:, 'return'] < 0, "return"].std() * np.sqrt(365.)
+        sortino_ratio = mean_return / dd
+
+        cum_ret = (1. + portfolio.loc[:, "return"]).cumprod()
+        peak = cum_ret.expanding(min_periods=1).max()
+        max_drawdown = ((cum_ret/peak) - 1.).min()
+        var_5 = portfolio.loc[:, "return"].quantile(0.05)
+
+        dfs.append(
+            {
+                colname.capitalize(): col,
+                "Retorno Promedio (Anualiz.)": mean_return,
+                "Volatilidad (Anualiz.)": volatility,
+                "Sharpe Ratio (Anualiz.)": sharpe_ratio,
+                "Sortino Ratio (Anualiz.)": sortino_ratio,
+                "Max Drawdown": max_drawdown,
+                "Historical VaR 5%": var_5
+            }
+        )
+
+    return pd.DataFrame(dfs)
+
+
 def make_coin_plots(df:pd.DataFrame):
 
     interval = alt.selection_interval(encodings=['x'])
@@ -274,6 +354,7 @@ def make_coin_plots(df:pd.DataFrame):
 
     return price_chart & price_view, return_chart & return_view, return_dist + return_dist_norm, boxplot
 
+
 def make_cluster_plot(df:pd.DataFrame):
     c = alt.Chart(df).mark_circle().encode(
         x = "PC1:Q",
@@ -290,6 +371,7 @@ def make_cluster_plot(df:pd.DataFrame):
     ).interactive()
 
     return c
+
 
 def make_clusters_stats_plot(clusters_stats:pd.DataFrame):
 
@@ -322,3 +404,78 @@ def make_clusters_stats_plot(clusters_stats:pd.DataFrame):
     ).properties(height=400)
 
     return c
+
+
+def make_symbols_info_plots(sector_agg, category_agg):
+
+    sector_plot = alt.Chart(sector_agg).mark_bar().encode(
+        x=alt.X("sector:N", title="Sector"),
+        y = alt.Y("count:Q", title="Numero de coins"),
+        color = alt.Color("mkt_cap_pct:Q", scale=alt.Scale(scheme="turbo"), title="% de Market Cap."),
+        tooltip = [
+            alt.Tooltip("mkt_cap:Q", title="Mkt. Cap."),
+            alt.Tooltip("mkt_cap_pct:Q", title="% de Mkt. Cap", format=".2%"),
+            alt.Tooltip("symbols"),
+        ],
+    ).interactive()
+
+    category_plot = alt.Chart(category_agg).mark_bar().encode(
+        x=alt.X("category:N", title="Categoría"),
+        y = alt.Y("count:Q", title="Numero de coins"),
+        color = alt.Color("mkt_cap_pct:Q", scale=alt.Scale(scheme="turbo"), title="% de Market Cap."),
+        tooltip = [
+            alt.Tooltip("mkt_cap:Q", title="Mkt. Cap."),
+            alt.Tooltip("mkt_cap_pct:Q", title="% de Mkt. Cap", format=".2%"),
+            alt.Tooltip("symbols"),
+        ],
+    ).interactive()
+
+    return sector_plot, category_plot
+
+
+def make_portfolio_plots(portfolio:pd.DataFrame):
+
+    temp = portfolio.drop(
+        ["price", "return"],axis=1
+    ).stack().reset_index().rename({"level_1": "symbol", 0: "price"}, axis=1)
+
+    selection = alt.selection_multi(fields=["symbol"])
+
+    c1 = alt.Chart(temp).mark_area(opacity=0.7).encode(
+        x="date:T",
+        y="price:Q",
+        color=alt.Color("symbol:N", scale=alt.Scale(scheme="sinebow")),
+        tooltip=["price:Q", "symbol:N"]
+    ).transform_filter(selection)
+
+    legend = alt.Chart(temp).mark_point().encode(
+    y=alt.Y('symbol:N', axis=alt.Axis(orient='right')),
+    color = alt.condition(selection,
+                      alt.Color('symbol:N', legend=None),
+                      alt.value('lightgray'))
+    ).add_selection(
+        selection
+    )
+
+    c1 = c1 | legend
+
+    temp = portfolio.copy()
+    temp.loc[:, "cum_ret"] = (1 + temp.loc[:, "return"]).cumprod()
+    temp.loc[:, "const"] = 1
+    c2 = alt.Chart(temp[temp["cum_ret"] > 1.].reset_index()).mark_bar(
+        color="green",
+    ).encode(
+        x=alt.X("date:T", title="Fecha"),
+        y=alt.Y("cum_ret:Q", title="Retorno cumulativo", scale=alt.Scale(zero=False)),
+        y2="const:Q",
+        tooltip=[alt.Tooltip("date:T", title="Fecha"), alt.Tooltip("return:Q", title="Retorno", format=".2%")]
+    ).interactive() + alt.Chart(temp[temp["cum_ret"] < 1.].reset_index()).mark_bar(
+        color="red",
+    ).encode(
+        x=alt.X("date:T", title="Fecha"),
+        y=alt.Y("cum_ret:Q", title="Retorno cumulativo", scale=alt.Scale(zero=False)),
+        y2="const:Q",
+        tooltip=[alt.Tooltip("date:T", title="Fecha"), alt.Tooltip("return:Q", title="Retorno", format=".2%")]
+    ).interactive()
+
+    return c1, c2
