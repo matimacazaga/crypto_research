@@ -4,3 +4,9 @@
 *.pyc
 cryptos.ipynb
 /dashboard/app_bis.py
+dashboard/__pycache__/app.cpython-39.pyc
+dashboard/__pycache__/__init__.cpython-39.pyc
+dashboard/__pycache__/app.cpython-39.pyc
+dashboard/__pycache__/data_management.cpython-39.pyc
+dashboard/__pycache__/utils.cpython-39.pyc
+dashboard/data/cache
