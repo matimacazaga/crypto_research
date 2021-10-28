@@ -41,7 +41,7 @@ def run_app():
     INIT_DATE = TODAY - relativedelta(years=lookback_period)
 
     with st.spinner("Descargando datos"):
-        if "last_update" not in st.session_state or (datetime.now()- st.session_state["last_update"]).seconds / 60 > 30:
+        if "last_update" not in st.session_state or (datetime.now()- st.session_state["last_update"]).seconds / 60 > 240:
             try:
                 dm = DataManager()
 
