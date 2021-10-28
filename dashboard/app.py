@@ -5,13 +5,15 @@ import pickle
 import streamlit as st
 
 from dashboard.livecoinwatch_wrapper import LiveCoinWatchException
-from .utils import *
+from .finance import *
 from .data_management import *
+from .plotting import *
 import altair as alt
 import pandas as pd
 from .config import BASE_PATH, lookback_period
 
 alt.themes.enable("fivethirtyeight")
+alt.renderers.set_embed_options(actions=False)
 
 METRICS_DESC = pickle.load(open(f"{BASE_PATH}/metrics_description", "rb"))
 
@@ -164,24 +166,12 @@ def run_app():
     st.write(coins_by_market_cap)
 
     # VOLUME vs MKT CAP
-    c = alt.Chart(coins_by_market_cap).mark_circle(size=100).encode(
-        x=alt.X('mkt_cap:Q', title="Market Cap"),
-        y=alt.Y('volume:Q', title="Volumen Total"),
-        tooltip=["symbol:N"]
-    ).interactive()
+    c = make_volume_vs_mkt_cap_plot(coins_by_market_cap)
 
     st.altair_chart(c, use_container_width=True)
 
     # MEAN RETURN vs VOLATILITY
-    c = alt.Chart(coins_stats).mark_circle(size=100).encode(
-        x=alt.X('mean_return:Q', title="Retorno Promedio"),
-        y=alt.Y('volatility:Q', title="Volatilidad"),
-        color="sharpe_ratio:Q",
-        tooltip=[
-            alt.Tooltip("symbol:N", title="Coin"),
-            alt.Tooltip('sharpe_ratio:Q', format='.3f', title="Sharpe Ratio")
-        ]
-    ).interactive()
+    c = make_mean_ret_vs_std_plot(coins_stats)
 
     st.altair_chart(c, use_container_width=True)
 
@@ -190,19 +180,7 @@ def run_app():
 
     btc_corrs = pd.concat([btc_corrs.iloc[:10], btc_corrs.iloc[-10:]])
 
-    c = alt.Chart(btc_corrs).mark_bar().encode(
-        x=alt.X("symbol:N", title="Coin"),
-        y=alt.Y("btc_corr:Q", title="Correlación con BTC"),
-        color=alt.Color("spy_corr_2:Q", title="Correlación con SPY"),
-        tooltip = [
-            alt.Tooltip(
-                "btc_corr:Q", format=".2f", title="Correlación con BTC"
-            ),
-            alt.Tooltip(
-                "spy_corr_2:Q", format=".2f", title="Correlación con SPY"
-            )
-        ]
-    )
+    c = make_btc_spy_corr_plot(btc_corrs)
 
     st.altair_chart(c, use_container_width=True)
 
@@ -211,15 +189,7 @@ def run_app():
 
     btc_beta = pd.concat([btc_beta.iloc[:10], btc_beta.iloc[:-10]])
 
-    c = alt.Chart(btc_corrs).mark_bar().encode(
-        x=alt.X("symbol:N", title="Coin"),
-        y=alt.Y("beta_capm_crypto:Q", title="Beta CAPM Crypto"),
-        tooltip = [
-            alt.Tooltip(
-                "beta_capm_crypto:Q", format=".2f", title="Beta CAPM Crypto"
-            )
-        ]
-    )
+    c = make_beta_capm_crypto_plot(btc_corrs)
 
     st.altair_chart(c, use_container_width=True)
 
@@ -349,25 +319,6 @@ def run_app():
         'Seleccionar una criptomoneda',
         symbols
     )
-
-    # # DATE INPUT
-    # MIN_VALUE = datetime(2017,1,1)
-    # dates = st.date_input(
-    #     "Seleccione el rango de fechas",
-    #     [INIT_DATE, TODAY.date()],
-    #     min_value=MIN_VALUE,
-    #     max_value=datetime(TODAY.year, TODAY.month, TODAY.day)
-    # )
-
-    # DOWNLOADING PRICE DATA
-    # coin = coins_by_market_cap.loc[
-    #     coins_by_market_cap.loc[:, "symbol"] == coin,
-    #     ["id", "symbol"]
-    # ].values.ravel()
-
-    # from_datetime = datetime(dates[0].year, dates[0].month, dates[0].day)
-
-    # to_datetime = datetime(dates[1].year, dates[1].month, dates[1].day)
 
     with st.spinner("Descargando datos"):
         df, source = dm.get_coin_history(selected_symbol, INIT_DATE, TODAY)
