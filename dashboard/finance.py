@@ -44,11 +44,13 @@ def compute_coin_stats(coin_history:tuple, spy:pd.DataFrame, btc:pd.DataFrame):
     spy_corr_2 = result.loc[:,"agg_ret"].corr(result.loc[:,"return_spy"])
     btc_corr = result.loc[:, "return"].corr(result.loc[:, "return_btc"])
 
-
-    slope, _, _, _, _ = stats.linregress(
+    try:
+        slope, _, _, _, _ = stats.linregress(
         result.dropna(subset=["return", "return_btc"]).loc[:, "return_btc"].values,
         result.dropna(subset=["return", "return_btc"]).loc[:, "return"].values
     )
+    except:
+        slope = 0
 
     mean_return = result.loc[:, "return"].mean() * 365.
 
