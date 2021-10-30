@@ -46,11 +46,13 @@ def compute_coin_stats(coin_history:tuple, spy:pd.DataFrame, btc:pd.DataFrame):
 
     try:
         slope, _, _, _, _ = stats.linregress(
-        result.dropna(subset=["return", "return_btc"]).loc[:, "return_btc"].values,
-        result.dropna(subset=["return", "return_btc"]).loc[:, "return"].values
-    )
-    except:
-        slope = 0
+            result.dropna(subset=["return", "return_btc"]).loc[:, "return_btc"].values,
+            result.dropna(subset=["return", "return_btc"]).loc[:, "return"].values
+        )
+
+    except ValueError:
+        print(coin_history[0])
+        slope = np.nan
 
     mean_return = result.loc[:, "return"].mean() * 365.
 
@@ -83,9 +85,9 @@ def get_coins_stats(coins_history:dict, spy:pd.DataFrame, btc:pd.DataFrame)->pd.
 
     stats = []
     for coin_history in coins_history.items():
-        stats.append(
-            compute_coin_stats(coin_history, spy, btc)
-        )
+            stats.append(
+                compute_coin_stats(coin_history, spy, btc)
+            )
     return pd.DataFrame(stats)
 
 

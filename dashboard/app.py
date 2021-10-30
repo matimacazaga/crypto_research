@@ -47,7 +47,7 @@ def run_app():
             try:
                 dm = DataManager()
 
-                BTC, _ = dm.get_coin_history("BTC", INIT_DATE, TODAY)
+                BTC, _ = dm.get_coin_history("BTC", INIT_DATE, TODAY, include_mkt_cap=True)
                 SPY = dm.get_spy_price(INIT_DATE, TODAY)
 
                 coins_by_market_cap = dm.get_top_coins_by_mkt_cap()
