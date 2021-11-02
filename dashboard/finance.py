@@ -161,6 +161,8 @@ def get_portfolios_by_col(coins_history:dict, df_agg:pd.DataFrame, col:str):
             portfolio.loc[:, "return"] = portfolio.loc[:, "price"].pct_change()
             portfolios[row[col]] = portfolio
         else:
+            if row["symbols"][0] not in coins_history:
+                continue
             portfolio = coins_history[row["symbols"][0]][0].loc[:, ["date", "price"]]
             #TODO: add log returns
             portfolio.loc[:, "return"] = portfolio.loc[:, "price"].pct_change()
