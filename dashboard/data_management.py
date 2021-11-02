@@ -38,8 +38,10 @@ class DataManager:
         self.supported_tickers = self._get_supported_tickers()
 
         self.livecoinwatch = LiveCoinWatchWrapper(
-            # "46dcd129-194e-4f7e-8dfd-9ba5c47cfdb8"
-            "703afe15-7cd2-4cc5-8b52-bb33d925f6a4"
+            # "46dcd129-194e-4f7e-8dfd-9ba5c47cfdb8" # Matias
+            # "830fdca8-bcc0-4f38-837a-252cbcc365df" # Theo 2
+            "703afe15-7cd2-4cc5-8b52-bb33d925f6a4" # Theo 1
+
         )
 
         self.coingecko = CoinGeckoAPI()
