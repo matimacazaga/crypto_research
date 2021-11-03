@@ -2,13 +2,13 @@ from dashboard import app1
 from dashboard import app2
 from dashboard import app3
 from dashboard import app4
+from dashboard import app5
 import json
 from datetime import datetime
 import streamlit as st
-from .config import BASE_PATH, lookback_period
+from .config import BASE_PATH, LOOKBACK_PERIOD, METRICS_FOR_ANALYSIS
 from dashboard.finance import *
 import pickle
-from .config import BASE_PATH, lookback_period
 from dateutil.relativedelta import relativedelta
 from .data_management import DataManager
 import os
@@ -21,7 +21,7 @@ def run_app():
 
     TODAY_STR = TODAY.strftime("%Y-%m-%d")
 
-    INIT_DATE = TODAY - relativedelta(years=lookback_period)
+    INIT_DATE = TODAY - relativedelta(years=LOOKBACK_PERIOD)
 
     INIT_DATE_STR = INIT_DATE.strftime("%Y-%m-%d")
 
@@ -78,6 +78,26 @@ def run_app():
                 coins_history, category_agg, "category"
             )
 
+            assets_metrics = dm.get_assets_metrics()
+
+            symbols = [
+                symbol for symbol in coins_by_market_cap.loc[:, "symbol"].str.lower()
+                if symbol in assets_metrics
+            ]
+
+            symbols_available_metrics = {
+                symbol: [
+                    m for m in METRICS_FOR_ANALYSIS if m in assets_metrics[symbol]
+                ] for symbol in symbols
+            }
+
+            symbols_metrics = Parallel(n_jobs=40)(delayed(
+                dm.get_historical_metrics_data
+            )(symbol, metrics, INIT_DATE, TODAY)
+            for symbol, metrics in symbols_available_metrics.items())
+
+            symbols_metrics = dict(filter(lambda i: i[1] is not None, symbols_metrics))
+
             cache_dict = {
                 "init_date": INIT_DATE,
                 "end_date": TODAY,
@@ -93,7 +113,8 @@ def run_app():
                 "sector_agg": sector_agg,
                 "category_agg": category_agg,
                 "portfolios_by_category": portfolios_by_category,
-                "portfolios_by_sector": portfolios_by_sector
+                "portfolios_by_sector": portfolios_by_sector,
+                "symbols_metrics": symbols_metrics
             }
 
             pickle.dump(cache_dict, open(f"{BASE_PATH}/cache", "wb"))
@@ -110,7 +131,8 @@ def run_app():
         "General Analysis": app1,
         "Specific Crypto Analysis": app2,
         "On-Chain Metrics and Clustering": app3,
-        "Sector Portfolios": app4
+        "Sector Portfolios": app4,
+        "Factor Analysis": app5
     }
 
     st.sidebar.title('Navigation')

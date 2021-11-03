@@ -11,6 +11,7 @@ if not os.path.isdir(BASE_PATH):
 from joblib import Parallel, delayed
 from pycoingecko import CoinGeckoAPI
 from .livecoinwatch_wrapper import LiveCoinWatchWrapper
+from .coinmetrics_wrapper import CoinMetricsWrapper
 from dateutil.relativedelta import relativedelta
 import pickle
 import pandas as pd
@@ -49,6 +50,8 @@ class DataManager:
         self.coins_dict = json.load(open("./crypto_classification/coins1.json"))
 
         self.messari_api = "https://data.messari.io/api/v2"
+
+        self.coinmetrics = CoinMetricsWrapper()
 
 
     @staticmethod
@@ -407,4 +410,53 @@ class DataManager:
         df.rename({"Date": "date", "Adj Close": "price"}, axis=1, inplace=True)
 
         return df.dropna()
+
+
+    def get_assets_metrics(self)->dict:
+        """
+        Get available metrics for each asset in coinmetrics.
+
+        Returns
+        -------
+        assets_metrics: dict
+            Dictionary with symbols as key and available metrics as values.
+        """
+
+        assets_info = self.coinmetrics.get_asset_info()
+
+        assets_metrics = {l["id"]: l["metrics"] for l in assets_info["assetsInfo"]}
+
+        return assets_metrics
+
+    def get_historical_metrics_data(
+        self,symbol:str, metrics:list, start:datetime, end:datetime
+    )->tuple:
+        """
+        Get historical metrics data for a symbol.
+
+        Parameters
+        ----------
+        symbol: str
+            Coin symbol (lowercase). E.g.: btc.
+        metrics: list
+            List of metrics to download. See available metrics in coinmetrics.
+        start: datetime
+            Star date.
+        end: datetime
+            End date.
+
+        Returns
+        -------
+        tuple
+            Tuple of symbol name and metrics DataFrame.
+        """
+        try:
+            metrics = self.coinmetrics.get_asset_metrics_data(
+                symbol, metrics, start, end
+            )
+
+        except:
+            metrics = None
+
+        return symbol, metrics
 

@@ -2,7 +2,7 @@ import requests
 from datetime import datetime
 import urllib.parse
 import pandas as pd
-from requests.api import head
+import numpy as np
 
 class CoinMetricsBase:
 
@@ -173,6 +173,8 @@ class CoinMetricsWrapper(CoinMetricsBase):
             ])
 
             df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
+
+            df = df.replace({None: np.nan}).astype({col: float for col in df.columns if col != "date"}).astype({col: float for col in df.columns if col != "date"})
 
             return df
         else:
