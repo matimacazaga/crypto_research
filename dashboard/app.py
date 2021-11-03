@@ -6,7 +6,6 @@ import json
 from datetime import datetime
 import streamlit as st
 from .config import BASE_PATH, lookback_period
-from dashboard.livecoinwatch_wrapper import LiveCoinWatchException
 from dashboard.finance import *
 import pickle
 from .config import BASE_PATH, lookback_period
@@ -52,7 +51,7 @@ def run_app():
                 symbol: coin_history
                 for symbol, coin_history in zip(
                     coins_by_market_cap.loc[:, "symbol"], coins_history
-                )
+                ) if coin_history[0].shape[0]>10
             }
 
             BTC = coins_history["BTC"][0]
@@ -106,36 +105,6 @@ def run_app():
         else:
 
             cache_dict = pickle.load(open(f"{BASE_PATH}/cache", "rb"))
-
-            # INIT_DATE = cache_dict["init_date"]
-
-            # TODAY = cache_dict["end_date"]
-
-            # INIT_DATE_STR = cache_dict["init_date_str"]
-
-            # TODAY_STR = cache_dict["end_date_str"]
-
-            # dm = cache_dict["dm"]
-
-            # BTC = cache_dict["BTC"]
-
-            # SPY = cache_dict["SPY"]
-
-            # coins_by_market_cap = cache_dict["coins_by_market_cap"]
-
-            # coins_history = cache_dict["coins_history"]
-
-            # coins_stats = cache_dict["coins_stats"]
-
-            # symbols_information = cache_dict["symbols_information"]
-
-            # sector_agg = cache_dict["sector_agg"]
-
-            # category_agg = cache_dict["category_agg"]
-
-            # portfolios_by_sector = cache_dict["portfolios_by_sector"]
-
-            # portfolios_by_category = cache_dict["portfolios_by_category"]
 
     PAGES = {
         "General Analysis": app1,
