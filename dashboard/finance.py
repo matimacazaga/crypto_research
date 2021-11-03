@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 
-
 def compute_coin_stats(coin_history:tuple, spy:pd.DataFrame, btc:pd.DataFrame):
     """
     Computes coin's statistics:
