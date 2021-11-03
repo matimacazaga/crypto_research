@@ -154,6 +154,26 @@ def run_app(cache_dict):
 
     st.write(coins_by_market_cap)
 
+    DATA_DESC = pickle.load(open(f"{BASE_PATH}/data_description", "rb"))
+
+    def describe_metric(metric_to_describe:str)->None:
+
+        d = [d for d in DATA_DESC if d["id"] == metric_to_describe][0]
+
+        st.markdown(
+            f"**Description**: {d['desc']}"
+        )
+
+    with st.expander("Descripción de las métricas"):
+
+        metric_to_describe = st.selectbox(
+            'Seleccionar una métrica',
+            [d["id"] for d in DATA_DESC],
+        )
+
+        describe_metric(metric_to_describe)
+
+
     # VOLUME vs MKT CAP
     c = make_volume_vs_mkt_cap_plot(coins_by_market_cap)
 

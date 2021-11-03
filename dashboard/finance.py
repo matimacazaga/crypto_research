@@ -53,6 +53,16 @@ def compute_coin_stats(coin_history:tuple, spy:pd.DataFrame, btc:pd.DataFrame):
         print(coin_history[0])
         slope = np.nan
 
+    try:
+        beta_spy, _, _, _, _ = stats.linregress(
+            result.dropna(subset=["return_spy", "agg_ret"]).loc[:, "agg_ret"].values,
+            result.dropna(subset=["return_spy", "agg_ret"]).loc[:, "return_spy"].values
+        )
+
+    except ValueError:
+        print(coin_history[0])
+        beta_spy = np.nan
+
     mean_return = result.loc[:, "return"].mean() * 365.
 
     volatility = result.loc[:, "return"].std(ddof=1) * np.sqrt(365.)
@@ -69,6 +79,7 @@ def compute_coin_stats(coin_history:tuple, spy:pd.DataFrame, btc:pd.DataFrame):
         "spy_corr_2": spy_corr_2,
         "btc_corr": btc_corr,
         "beta_capm_crypto": slope,
+        "beta_capm_spy": beta_spy,
         "mean_return": mean_return,
         "volatility": volatility,
         "sharpe_ratio": sharpe_ratio,

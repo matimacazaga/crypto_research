@@ -176,6 +176,13 @@ def run_app(cache_dict):
         st.markdown(f"**Description**: {coins_dict[selected_symbol.lower()]['desc']}")
     except:
         st.markdown('Description not available')
+
+    try:
+        st.markdown(f"**Sector**: {coins_dict[selected_symbol.lower()]['sector'].capitalize()}")
+    except:
+        st.markdown('Sector not available')
+
+
     st.markdown("### Daily returns statistics")
 
     coin_stats = get_coin_returns_stats(df)
