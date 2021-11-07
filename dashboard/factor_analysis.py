@@ -23,7 +23,7 @@ from pandas.tseries.offsets import CustomBusinessDay, Day, BusinessDay
 from scipy.stats import mode
 from statsmodels.regression.linear_model import OLS
 from statsmodels.tools.tools import add_constant
-import altair as alt
+from .plotting import plot_quantile_returns, plot_cumulative_returns_by_quantile, plot_spread_return
 
 class NonMatchingTimezoneError(Exception):
     pass
@@ -1338,45 +1338,6 @@ def get_returns_table(alpha_beta,
         mean_ret_spread_quantile.mean()
 
     return returns_table.apply(lambda x: x.round(3))
-
-
-def plot_quantile_returns(mean_quant_rateret):
-
-    c = alt.Chart(mean_quant_rateret.stack().reset_index().rename({"level_1": "period", 0: "mean_return"}, axis=1)).mark_line(point=True).encode(
-        x=alt.X("factor_quantile:N", title="Factor Quantile"),
-        y=alt.Y("mean_return:Q", axis=alt.Axis(format='.2%'), title="Retorno Promedio", scale=alt.Scale(domain=[mean_quant_rateret.min().min(), mean_quant_rateret.max().max()])),
-        color=alt.Color("period:N", title="Período"),
-        tooltip=[alt.Tooltip("mean_return:Q", title="Retorno promdeio", format=".2%")]
-    ).properties(width=300)
-
-    return c
-
-
-def plot_cumulative_returns_by_quantile(mean_quant_ret_bydate):
-
-    alt.data_transformers.disable_max_rows()
-    temp = mean_quant_ret_bydate.unstack("factor_quantile").apply(lambda x: (1. + x).cumprod())
-    temp = temp.stack("factor_quantile").reset_index().rename({"level_2": "period", 0: "cum_ret"}, axis=1)
-    c = alt.Chart(temp).mark_line().encode(
-        x=alt.X("date:T", title="Fecha"),
-        y=alt.Y("1D:Q", title="Retorno cumulativo (1D)"),
-        color=alt.Color("factor_quantile:N", title="Factor Quantile"),
-        tooltip=[alt.Tooltip("date:T", title="Fecha"), alt.Tooltip("1D:Q", title="Retorno cumulativo", format=".2f")]
-    )
-    return c
-
-
-def plot_spread_return(mean_ret_spread_quant):
-    temp=mean_ret_spread_quant.loc[:, "1D"].rolling(30).mean()
-    c = alt.Chart(temp.reset_index()).mark_line().encode(
-        x="date:T",
-        y=alt.Y("1D:Q", title="Spread Return 1D (30D moving average)")
-    ) + alt.Chart(temp.reset_index()).mark_rule(color='red').encode(
-        y=alt.Y('mean(1D):Q', title=""),
-        tooltip=[alt.Tooltip("mean(1D):Q", title="Mean 1D spread", format=".3f")]
-    )
-
-    return c
 
 
 def analyze_factor(

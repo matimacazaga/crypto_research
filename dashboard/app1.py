@@ -12,9 +12,9 @@ alt.renderers.set_embed_options(actions=False)
 
 def run_app(cache_dict):
 
-    TODAY_STR = cache_dict["end_date"]
+    TODAY_STR = cache_dict["end_date_str"]
 
-    INIT_DATE_STR = cache_dict["init_date"]
+    INIT_DATE_STR = cache_dict["init_date_str"]
 
     coins_by_market_cap = cache_dict["coins_by_market_cap"]
 
